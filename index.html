@@ -1,37 +1,262 @@
-## Welcome to GitHub Pages
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="homesimondice.css">
+    <title>Simon Dice</title>
 
-You can use the [editor on GitHub](https://github.com/fpdecastro/fpdecastro.github.io/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
+</head>
+<style>
+    body{
+    margin: 0;
+    background: #dedede;
+    display: flex;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Arial';
+    font-size: 50px;
+    background-image: url(./fondos/fondo2.jpg);
+    background-size: 100vw;
+    background-position: 0px;
+    flex-direction: column;
+}
+.containerLevel{
+    display: flex;
+}
+.gameboard{
+    height: 100vh;
+    width: 100vh;
+    border-radius: 100%;
+    overflow: hidden;
+    margin: 0 auto;
+    display: block;
+    max-width: 50vh;
+    max-height: 50vh;
+}
+.countLevel{
+    height: 60px;
+    width: 50%;
+    border: none;
+    border-radius: 10px;
+    text-align: center;
+    margin: 90px auto;
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 2.2rem;
+    display: flex;
+}
+.color{
+    width: 50%;
+    height: 50%;
+    /* display: block; */
+}
+.left{
+    float: left;
+}
+.right{
+    float: left;
+}
+.rojo{
+    background: #d92027;
+}
+.rojo.light{
+    background: white;
+}
+.verde{
+    background: #81ce4b;
+}
+.verde.light{
+    background: white;
+}
+.amarillo{
+    background: #ffcd3c;
+}
+.amarillo.light{
+    background: white;
+}
+.celeste{
+    background: #10375c;
+}
+.celeste.light{
+    background: white;
+}
+.button-start{
+    color: #383838;
+    border: none;
+    font-family: 'Calibri';
+    border-radius: 30px;
+    width: 400px;
+    height: 90px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 2.2rem;
+    position: absolute;
+    top: calc(50% - 50px);
+    left: calc(50% - 200px);
+} 
+.hide{
+    display: none;
+}
+</style>
+<body>
+    <div class="containerLevel">
+        <input type="text" id="countLevel" placeholder="Nivel:" class="countLevel" readonly="readonly">
+    </div>
+    <div class="gameboard">
+        <div id="rojo" class="color rojo left" data-color="rojo"></div>
+        <div id="verde" class="color verde right" data-color="verde"></div>
+        <div id="amarillo" class="color amarillo left" data-color="amarillo"></div>
+        <div id="celeste" class="color celeste right" data-color="celeste"></div>
+        <button id="btnEmpezar" class="button-start" onclick="Empezarjuego()">EMPIEZA EL JUEGO</button>
+    </div>   
+</body>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script>
+        //getElementById lo que hace es tener como referencia el elemento en html que tiene ese id
+    const rojo = document.getElementById('rojo')
+    const verde = document.getElementById('verde')
+    const amarillo = document.getElementById('amarillo')
+    const celeste = document.getElementById('celeste')
+    const btnEmpezar = document.getElementById('btnEmpezar')
+    const countLevel = document.getElementById('countLevel')
+    const ULTIMO_NIVEL = 10
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+    class Juego{
+        //Son funciones que me delimitan las características de la clase Juego
+        constructor(){
+            this.inicializar();
+            this.generarSecuencia();
+            this.siguienteNivel()
+            }
 
-### Markdown
+        inicializar(){
+            this.togglebtnEmpezar()
+            this.nivel = 1
+            this.colores = {
+                celeste, verde, amarillo, rojo
+            }
+            this.elegirColor = this.elegirColor.bind(this)
+        }
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+        togglebtnEmpezar(){
+            if(btnEmpezar.classList.contains('hide')){
+                btnEmpezar.classList.remove('hide')
+            }else{
+                btnEmpezar.classList.add('hide')
+            }
 
-```markdown
-Syntax highlighted code block
+        }
 
-# Header 1
-## Header 2
-### Header 3
+        generarSecuencia(){
+            this.secuencia = new Array(ULTIMO_NIVEL).fill(0).map( n => Math.round(100 * Math.random()) % 4 +1)
+        }
 
-- Bulleted
-- List
+        siguienteNivel(){
+            this.iluminarSecuencia()
+            this.eventoClick()
+            this.actualizarNivel()
+            //La propiedad subNivel=0 solo existe en la función siguienteNivel()
+            this.subNivel = 0
+        }
+// Esta función forma parte del prototype de juego
 
-1. Numbered
-2. List
+        transformarNumero(numero){
+            switch(numero){
+                case 1:
+                    return 'celeste'
+                case 2:
+                    return 'verde'
+                case 3:
+                    return 'amarillo'
+                case 4:
+                return 'rojo'
+            }
+        }
 
-**Bold** and _Italic_ and `Code` text
+        transformarColor(color){
+            switch(color){
+                case 'celeste':
+                    return 1
+                case 'verde':
+                    return 2
+                case 'amarillo':
+                    return 3
+                case 'rojo':
+                return 4
+            }
+        }
 
-[Link](url) and ![Image](src)
-```
+//ILLUMINAMOS LA SECUENCIA
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+        iluminarSecuencia(){         
+            for(var i = 0; i < this.nivel; i++){
+//color será igual al color que direcciones el array con números aleatorios creado
+                let color = this.transformarNumero(this.secuencia[i])
+// Solo queda usar let y var por que sino el color pasa a la siguiente función con un único valor
+                setTimeout(() => this.iluminarColor(color), 1000 * i)
+            }
+        }
 
-### Jekyll Themes
+        iluminarColor(color){
+            this.colores[color].classList.add('light')
+            setTimeout(() => this.apagarColor(color),350)
+        }
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/fpdecastro/fpdecastro.github.io/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+        apagarColor(color){
+            this.colores[color].classList.remove('light')
+        }
 
-### Support or Contact
+//INTERACTUAMOS CON EL USUARIO - LE PEDIMOS QUE NOS DE SU SECUENCIA
+//Colocamos addEventListener(tipo, Listener)
+//tipo: click, load or error hay muchos más (mousedown, mouseup, keydown, keypress, keyup)
+//¿Qué hace la función eventClick no recibe ningún parámetro y al haber un click en los div que tienen
+//celeste, verde, amarillo, rojo se ejecuta la función elegirColor?
+        eventoClick(){
+            this.colores.celeste.addEventListener('click',this.elegirColor)
+            this.colores.verde.addEventListener('click',this.elegirColor)
+            this.colores.amarillo.addEventListener('click',this.elegirColor)
+            this.colores.rojo.addEventListener('click',this.elegirColor)
+        }
+        eliminarEventosClick(){
+            this.colores.celeste.removeEventListener('click',this.elegirColor)
+            this.colores.verde.removeEventListener('click',this.elegirColor)
+            this.colores.amarillo.removeEventListener('click',this.elegirColor)
+            this.colores.rojo.removeEventListener('click',this.elegirColor)    
+        }
 
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+//CONFIRMAMOS SI EL USUARIO APRETO BIEN O MAL
+//El target es el componente de html donde se hizo click que desato el evento
+        elegirColor(ev){
+            const color = ev.target.dataset.color
+            const numero = this.transformarColor(color)
+            setTimeout(() => this.iluminarColor(color), 0)
+            if(numero === this.secuencia[this.subNivel]){
+                this.subNivel ++
+                // swal(`Perfecto pasaste al nivel ${this.subNivel}`)
+                if(this.subNivel === this.nivel){
+                    this.nivel ++
+                    this.eliminarEventosClick()
+                    if(this.nivel === (ULTIMO_NIVEL + 1)){
+                        swal('GANASTE','Felicidades pasaste los 10 niveles', 'success')
+                        this.inicializar()
+                    }
+                    else{
+                        setTimeout(this.siguienteNivel.bind(this), 1500) 
+                    }
+                }
+            }else{
+                swal('PERDISTE', 'Lo siento intentalo de nuevo', 'error')
+                this.inicializar()
+                this.eliminarEventosClick()
+            }
+        }
+
+        actualizarNivel(){
+            countLevel.value = `Nivel: ${this.nivel}`
+        }
+
+    }
+    function Empezarjuego(){
+        window.juego = new Juego
+    }
+    </script>
+</html>
